@@ -2,6 +2,7 @@ const {
   request,
   GraphQLClient
 } = require('graphql-request')
+var fs = require('fs')
 
 const query = `
   query getSearchResults_matchmaking($first: Int!, $filterBy: String, $with: String, $after: String, $orderBy: String) {
@@ -86,13 +87,22 @@ const fetchPage = async (after: string | null): Promise<string> => {
 
   const pageResult = await graphQLClient.request(query, {
     "after": after,
-    "first": 2,
+    "first": 100,
     "filterBy": "criteria.region='GB' && criteria.location.latitude='55.378051' && criteria.location.longitude='-3.435973' && criteria.distanceWithin='1000' && criteria.industryServed=null && criteria.serviceProvided=null && criteria.productSupported=null",
     "with": "version='V2' && intent='combined-3' && visitorId='038404524942896140' && extVisitorId='038404524942896140'"
   })
 
   for (const c of pageResult.company.searchAccountantListings.edges) {
-    console.log('Company name:' + c.node.companyName);
+    const companyName = c.node.companyName;
+    // console.log('Company name:' + );
+
+    fs.appendFile('./output/list.csv', `\r\n${companyName}`, (err) => {
+      if (err) {
+        // append failed
+      } else {
+        // done
+      }
+    })
   }
 
   const lastCursor = pageResult.company.searchAccountantListings.edges[pageResult.company.searchAccountantListings.edges.length - 1].cursor;
@@ -104,13 +114,13 @@ const main = async () => {
 
   let pageNumber = 0;
   let lastAfter = null;
-  const maxPageCount = 10;
+  const maxPageCount = 5;
 
   do {
     lastAfter = await fetchPage(lastAfter);
     pageNumber++;
     await delay(3000);
-  } while (!lastAfter || pageNumber < maxPageCount)
+  } while (!lastAfter && pageNumber < maxPageCount)
 }
 
 main().then(_ => console.log('Success!')).catch((err) => console.log(err));
