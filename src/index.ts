@@ -112,9 +112,7 @@ const extractEmails = (text: string): string[] => {
   if (!arr) {
     return []
   }
-
   // console.log('Emails', arr)
-
   return arr
 }
 
@@ -127,12 +125,12 @@ const extractAddress = (address: any[]): string => {
   return resultString
 }
 
-const fetchPage = async (page: number, after: string | null): Promise<string> => {
-  console.log(`start process after ${after} ...`);
+const fetchPage = async (page: number, limit: number = 100, after: string | null): Promise<string> => {
+  console.log(`start process page: ${page} after: ${after} ...`);
 
   const pageResult = await graphQLClient.request(query, {
     "after": after,
-    "first": 100,
+    "first": limit,
     "filterBy": "criteria.region='GB' && criteria.location.latitude='55.378051' && criteria.location.longitude='-3.435973' && criteria.distanceWithin='1000' && criteria.industryServed=null && criteria.serviceProvided=null && criteria.productSupported=null",
     "with": "version='V2' && intent='combined-3' && visitorId='038404524942896140' && extVisitorId='038404524942896140'"
   })
@@ -148,7 +146,7 @@ const fetchPage = async (page: number, after: string | null): Promise<string> =>
   for (const c of pageResult.company.searchAccountantListings.edges) {
     const firstName = c.node.person.givenName
     const familyName = c.node.person.familyName
-    const aboutMe = c.node.summary ? c.node.summary.replace(/\;/gi, '.') : ''
+    const aboutMe = c.node.summary ? c.node.summary.replace(/\;/gi, '.').replace(/(\r\n|\n|\r)/gm, ' ') : ''
     const emails = extractEmails(aboutMe).join(',')
     const companyName = c.node.companyName
     const website = c.node.website
@@ -163,7 +161,7 @@ const fetchPage = async (page: number, after: string | null): Promise<string> =>
     const reviewCount = c.node.reviewsInfo.reviewStats.numberOfReviews
     const avgOverallRating = c.node.reviewsInfo.reviewStats.avgOverallRating
 
-    const row = `${firstName};${familyName};${companyName};${phones};${address};${website};${socialLinks};${emails};${services};${industries};${softwareExpertise};${creds};${reviewCount};${avgOverallRating}`;
+    const row = `${firstName};${familyName};${companyName};${phones};${address};${website};${socialLinks};${emails};${services};${industries};${softwareExpertise};${creds};${reviewCount};${avgOverallRating};${aboutMe}`;
     addRow(row)
   }
 
@@ -185,19 +183,20 @@ const main = async () => {
   console.log('Start ...');
   let pageNumber = 1;
   let lastAfter = null;
-  const maxPageCount = 1;
+  const limit = 100;
+  const maxPageCount = 50;
 
-  addRow('FirstName;LastName;CompanyName;Phones;Address;Website;SocialLinks;Emails;Services;Industries;SoftwareExpertise;Credentials;ReviewCount;AvgRating')
+  addRow('FirstName;LastName;CompanyName;Phones;Address;Website;SocialLinks;Emails;Services;Industries;SoftwareExpertise;Credentials;ReviewCount;AvgRating;AboutMe')
 
   do {
-    lastAfter = await fetchPage(pageNumber, lastAfter);
+    lastAfter = await fetchPage(pageNumber, limit, lastAfter);
     // console.log(`Next cursor: ${lastAfter}`);
     pageNumber++;
     if (pageNumber >= maxPageCount) {
       break
     }
 
-    await delay(3000);
+    await delay(10000);
   } while (lastAfter)
 }
 

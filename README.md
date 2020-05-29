@@ -3,7 +3,7 @@
 - Name and Surname of Accountant
 - Company name
 - Full Address of the accounting firm
-Email if possible to extract from about me field
+- Email if possible to extract from about me field
 - Website
 - Phone number
 - Services
