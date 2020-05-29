@@ -1,0 +1,72 @@
+query getPublicReviews_matchmaking($first: Int!, $filterBy: String!) {
+  company {
+    publicAccountantListings(first: $first, filterBy: $filterBy) {
+      edges {
+        node {
+          reviewsInfo {
+            reviewStats {
+              numberOfReviews
+              numberOfV2Reviews
+              avgOverallRating
+              avgResponsivenessRating
+              avgProfessionalismRating
+              avgExpertiseRating
+              avgHelpfulnessRating
+              __typename
+            }
+            reviews(first: 100) {
+              edges {
+                node {
+                  id
+                  listingId
+                  title
+                  text
+                  industry
+                  services
+                  softwareExpertise
+                  expertiseRating
+                  helpfulnessRating
+                  professionalismRating
+                  responsivenessRating
+                  overallRating
+                  recommended
+                  reviewerAlias
+                  reviewerEmail {
+                    emailAddress
+                    __typename
+                  }
+                  reviewedDate
+                  locale
+                  version
+                  comments(first: 100) {
+                    edges {
+                      node {
+                        commentText
+                        moderationStatus
+                        createdOn
+                        moderatedOn
+                        submissionId
+                        reviewId
+                        __typename
+                      }
+                      __typename
+                    }
+                    __typename
+                  }
+                  __typename
+                }
+                __typename
+              }
+              __typename
+            }
+            __typename
+          }
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
