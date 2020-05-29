@@ -5,7 +5,8 @@ import { Contact } from "./entities/contact";
 import { root } from './path'
 import { ContactService } from "./services/contactService";
 import { extractEmails, extractAddress, delay } from "./services/funcs"
-const fs = require('fs')
+import { CsvService } from './services/csvService';
+
 
 const query = `
 query getSearchResults_matchmaking($first: Int!, $filterBy: String, $with: String, $after: String, $orderBy: String) {
@@ -115,14 +116,6 @@ const fetchPage = async (repo: Repository<Contact>, page: number, limit: number 
     "with": "version='V2' && intent='combined-3' && visitorId='038404524942896140' && extVisitorId='038404524942896140'"
   })
 
-  // fs.appendFile(`./output/page_${page}.json`, JSON.stringify(pageResult), (err) => {
-  //   if (err) {
-  //     // append failed
-  //   } else {
-  //     // done
-  //   }
-  // })
-
   const edges = pageResult['company']['searchAccountantListings']['edges']
 
   let i = 1;
@@ -180,23 +173,10 @@ const fetchPage = async (repo: Repository<Contact>, page: number, limit: number 
       await delay(500)
       i++
     }
-
-    // TODO: const row = `${firstName};${familyName};${companyName};${phones};${address};${website};${socialLinks};${emails};${services};${industries};${softwareExpertise};${creds};${reviewCount};${avgOverallRating};${aboutMe}`;
-    // addRow(row)
   }
 
   const lastCursor = edges[edges.length - 1].cursor;
   return lastCursor;
-}
-
-const addRow = (row: string) => {
-  fs.appendFile('./output/list.csv', `\r\n${row}`, (err) => {
-    if (err) {
-      console.log('Could not append row', err)
-    } else {
-      // done
-    }
-  })
 }
 
 const main = async (repo: Repository<Contact>) => {
@@ -205,8 +185,6 @@ const main = async (repo: Repository<Contact>) => {
   let lastAfter = null;
   const limit = 100;
   const maxPageCount = 50;
-
-  // TODO:addRow('FirstName;LastName;CompanyName;Phones;Address;Website;SocialLinks;Emails;Services;Industries;SoftwareExpertise;Credentials;ReviewCount;AvgRating;AboutMe')
 
   do {
     lastAfter = await fetchPage(repo, pageNumber, limit, lastAfter);
@@ -230,6 +208,10 @@ const options: ConnectionOptions = {
 
 createConnection(options).then(async (connection) => {
   const repo = connection.getRepository(Contact)
-  await main(repo)
+
+  const service = new CsvService()
+  await service.writeToFile(repo)
+
+  // await main(repo)
   console.log('Success!')
 }).catch(error => console.log(error))
